@@ -6,6 +6,9 @@
 *.user
 *.userosscache
 *.sln.docstates
+FilePArt/
+boost_1_55_0/
+boost_1_55_0.zip
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
