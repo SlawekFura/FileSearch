@@ -9,6 +9,9 @@
 FilePArt/
 boost_1_55_0/
 boost_1_55_0.zip
+FileSearch/FileSearch.vcxproj
+*sth*
+*.gitignore
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

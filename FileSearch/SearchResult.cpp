@@ -6,12 +6,10 @@ void SearchResult::addResult(path p_path, ResultInfo p_result)
 	replaceSpecialCharacters(p_result);
 	if (resIter != resultContainer.end())
 	{
-		//std::cout << "dupa1" << std::endl;
 		resIter->second.insert(std::move(p_result));
 	}
 	else
 	{
-		//std::cout << "dupa2" << std::endl;
 		resultContainer.emplace(std::move(p_path), std::set<ResultInfo>{ p_result });
 	}
 }

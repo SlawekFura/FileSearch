@@ -114,6 +114,7 @@
     <ClCompile Include="FileParser.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SearchResult.cpp" />
+    <ClCompile Include="ThreadPool.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileParser.h" />

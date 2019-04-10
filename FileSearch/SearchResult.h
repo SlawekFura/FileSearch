@@ -11,7 +11,7 @@ using std::experimental::filesystem::path;
 struct SearchResult
 {
 	const std::map<std::string, std::string> strToReplace{ { "\n", "\\n" },{ "\r", "\\r" },{ "\t", "\\t" } };
-	using position = long long;
+	using position = size_t;
 	using prefix = std::string;
 	using suffix = std::string;
 	using ResultInfo = std::tuple<position, prefix, suffix>;

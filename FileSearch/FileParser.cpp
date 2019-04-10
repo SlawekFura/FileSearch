@@ -8,30 +8,31 @@
 static int a = 0;
 
 //some function for testing purposes
-void printer(const char* p_word)
-{
-	while (*p_word++ != '\0')
-	{
-		char charToPrint = *p_word;
-		switch (charToPrint)
-		{
-		case '\n':
-			std::cout << "\\n";
-			break;
-		case '\t':
-			std::cout << "\\t";
-			break;
-		default:
-			std::cout << *p_word;
-		}
-	}
-}
+//void printer(const char* p_word)
+//{
+//	while (*p_word++ != '\0')
+//	{
+//		char charToPrint = *p_word;
+//		switch (charToPrint)
+//		{
+//		case '\n':
+//			std::cout << "\\n";
+//			break;
+//		case '\t':
+//			std::cout << "\\t";
+//			break;
+//		default:
+//			std::cout << *p_word;
+//		}
+//	}
+//}
 
 using std::experimental::filesystem::path;
 
 void Parser::parse()
 {
-	for (long long buffer = 0; buffer < m_fileSize; buffer += m_newDataToReadSize)
+	fillDataPreambuleWithDummyChars();
+	for (size_t buffer = 0; buffer < m_fileSize; buffer += m_newDataToReadSize)
 	{
 		m_fileStream.read(&m_data[m_preambule], m_newDataToReadSize);
 		m_data[m_fileStream.gcount() + m_preambule] = '\0';
@@ -42,9 +43,15 @@ void Parser::parse()
 	//std::cout << "num: " << a << std::endl;
 }
 
-//Main assumption:
-//buffer consists {[data from previous iteration], [new read data], [unprocessed data to be copied on the begin - preambule]} - for getting preffix and suffix
-void Parser::processBuffer(long long p_bufferPackage)
+void Parser::fillDataPreambuleWithDummyChars()
+{
+	for (size_t i = 0; i < m_preambule; ++i) { m_data[i] = DUMMY_CHAR; };
+}
+
+//buffer consists {[data from previous iteration],
+//				   [new read data],
+//				   [unprocessed data to be copied to the begin - preambule - for getting preffix and suffix]} 
+void Parser::processBuffer(size_t p_bufferPackage)
 {
 	const char * pos = m_data + MAX_PREFIX_SIZE;
 	while ((pos = strstr(pos, m_wordToSearch.c_str())) != NULL)
@@ -62,12 +69,6 @@ void Parser::processBuffer(long long p_bufferPackage)
 		}
 
 		int8_t preffixOffset = calculatePrefixOffset(p_bufferPackage, finalPosition);
-		if (preffixOffset == -1)
-		{
-			std::cout << "Error with prefix Offset calculation!" << std::endl;
-			continue;
-		}
-
 		int8_t suffixOffset = calculateSuffixOffset(p_bufferPackage, finalPosition, pos, isLastDataPackageProcessed);
 		if (suffixOffset == -1)
 		{
@@ -75,17 +76,18 @@ void Parser::processBuffer(long long p_bufferPackage)
 			continue;
 		}
 
+		std::unique_lock<std::mutex> lock(m_resultFillingMutex);
 		m_searchResult.addResult(m_path, std::make_tuple<SearchResult::position, SearchResult::prefix, SearchResult::suffix>
 			(std::move(finalPosition),
 				std::string(pos - preffixOffset, pos),
 				std::string(pos + m_wordToSearch.size(), pos + m_wordToSearch.size() + suffixOffset)));
 		++pos;
-		a++;
+//		a++;
 	}
 	strncpy_s(&m_data[0], DATA_BUFFER_SIZE, &m_data[DATA_BUFFER_SIZE - m_preambule - 1], m_preambule);
 }
 
-int8_t Parser::calculatePrefixOffset(long long p_bufferPackage, SearchResult::position p_finalPosition)
+int8_t Parser::calculatePrefixOffset(size_t p_bufferPackage, SearchResult::position p_finalPosition)
 {
 	bool isFirstDataPackageProcessed = p_bufferPackage == 0;
 	if (isFirstDataPackageProcessed)
@@ -96,7 +98,7 @@ int8_t Parser::calculatePrefixOffset(long long p_bufferPackage, SearchResult::po
 	return MAX_PREFIX_SIZE;
 }
 
-int8_t Parser::calculateSuffixOffset(long long p_bufferPackage, SearchResult::position p_finalPosposition, const char * p_pos, bool p_isLastDataPackageProcessed)
+int8_t Parser::calculateSuffixOffset(size_t p_bufferPackage, SearchResult::position p_finalPosposition, const char * p_pos, bool p_isLastDataPackageProcessed)
 {
 	if (p_isLastDataPackageProcessed)
 	{

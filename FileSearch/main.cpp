@@ -21,7 +21,6 @@ int main(int argc, char * argv[])
 
 	//performance testing
 	auto startTime = std::chrono::system_clock::now();
-	std::chrono::time_point<std::chrono::system_clock> end;
 
 	unsigned int numOfAvailableThreads = std::thread::hardware_concurrency();
 
