@@ -1,14 +1,5 @@
-#include "ThreadPool.hpp"
 #include <chrono>
-#include <windows.h>
-#include <stdio.h>
-#include <conio.h>
-#include <tchar.h>
-#include <WinBase.h>
-#include <handleapi.h>
-#include <minwinbase.h>
-#include <memory>
-#include <comdef.h>
+#include "ThreadPool.hpp"
 #include "ParametersValidator.h"
 #include "Task.hpp"
 
@@ -28,6 +19,7 @@ int main(int argc, char * argv[])
 	path pathToSearch(argv[PATH_TO_SEARCH_POSITION]);
 	std::string wordToSearch(argv[STRING_TO_SEARCH_POSITION]);
 
+	//performance testing
 	auto startTime = std::chrono::system_clock::now();
 	std::chrono::time_point<std::chrono::system_clock> end;
 

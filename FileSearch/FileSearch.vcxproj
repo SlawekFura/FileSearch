@@ -113,6 +113,7 @@
   <ItemGroup>
     <ClCompile Include="FileParser.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SearchResult.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FileParser.h" />

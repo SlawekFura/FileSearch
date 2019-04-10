@@ -33,9 +33,8 @@ void Parser::parse()
 {
 	for (long long buffer = 0; buffer < m_fileSize; buffer += m_newDataToReadSize)
 	{
-		m_fileStream.read(&m_data[m_preambule - 1], m_newDataToReadSize);
-
-		m_data[m_fileStream.gcount() + m_preambule - 1] = '\0';
+		m_fileStream.read(&m_data[m_preambule], m_newDataToReadSize);
+		m_data[m_fileStream.gcount() + m_preambule] = '\0';
 
 		processBuffer(buffer);
 	}
@@ -44,16 +43,19 @@ void Parser::parse()
 }
 
 //Main assumption:
-//buffer consists {[data from previous iteration], [new read data], [unprocessed data to be copied on the begin]} - for getting preffix and suffix
+//buffer consists {[data from previous iteration], [new read data], [unprocessed data to be copied on the begin - preambule]} - for getting preffix and suffix
 void Parser::processBuffer(long long p_bufferPackage)
 {
 	const char * pos = m_data + MAX_PREFIX_SIZE;
 	while ((pos = strstr(pos, m_wordToSearch.c_str())) != NULL)
 	{
-		SearchResult::position finalPosition = p_bufferPackage + (pos - &m_data[0]) - (m_preambule - 1);
+		size_t offset = pos - m_data;
+		SearchResult::position finalPosition = p_bufferPackage + offset - m_preambule;
 
-		bool isWordOccurrenceExceededSearchingBoundries = pos > m_data + m_finalBufferSize - m_wordToSearch.size() - MAX_PREFIX_SIZE - 1;
-		if (isWordOccurrenceExceededSearchingBoundries)
+		bool isWordOccurrenceExceededSearchingBoundries = pos > m_data + DATA_BUFFER_SIZE - 1 - m_wordToSearch.size() - MAX_SUFFIX_SIZE;
+		bool isLastDataPackageProcessed = m_fileStream.gcount() < m_newDataToReadSize;
+
+		if (isWordOccurrenceExceededSearchingBoundries && !isLastDataPackageProcessed)
 		{
 			++pos;
 			continue;
@@ -66,7 +68,7 @@ void Parser::processBuffer(long long p_bufferPackage)
 			continue;
 		}
 
-		int8_t suffixOffset = calculateSuffixOffset(p_bufferPackage, finalPosition, pos);
+		int8_t suffixOffset = calculateSuffixOffset(p_bufferPackage, finalPosition, pos, isLastDataPackageProcessed);
 		if (suffixOffset == -1)
 		{
 			std::cout << "Error with suffix Offset calculation!" << std::endl;
@@ -80,7 +82,7 @@ void Parser::processBuffer(long long p_bufferPackage)
 		++pos;
 		a++;
 	}
-	strncpy_s(&m_data[0], m_finalBufferSize, &m_data[m_finalBufferSize - m_preambule], m_preambule - 1);
+	strncpy_s(&m_data[0], DATA_BUFFER_SIZE, &m_data[DATA_BUFFER_SIZE - m_preambule - 1], m_preambule);
 }
 
 int8_t Parser::calculatePrefixOffset(long long p_bufferPackage, SearchResult::position p_finalPosition)
@@ -94,10 +96,9 @@ int8_t Parser::calculatePrefixOffset(long long p_bufferPackage, SearchResult::po
 	return MAX_PREFIX_SIZE;
 }
 
-int8_t Parser::calculateSuffixOffset(long long p_bufferPackage, SearchResult::position p_finalPosposition, const char * p_pos)
+int8_t Parser::calculateSuffixOffset(long long p_bufferPackage, SearchResult::position p_finalPosposition, const char * p_pos, bool p_isLastDataPackageProcessed)
 {
-	bool isLastDataPackageProcessed = m_fileStream.gcount() < m_newDataToReadSize;
-	if (isLastDataPackageProcessed)
+	if (p_isLastDataPackageProcessed)
 	{
 		bool isWholeSuffixInFileBoundaries = (p_finalPosposition + m_wordToSearch.size() + MAX_SUFFIX_SIZE) < m_fileSize;
 		if (isWholeSuffixInFileBoundaries)
@@ -113,7 +114,7 @@ int8_t Parser::calculateSuffixOffset(long long p_bufferPackage, SearchResult::po
 
 		if (isPositionInBoundaries)
 		{
-			return m_preambule + m_newDataToReadSize - (p_pos - &m_data[0]) - m_wordToSearch.size() - 1;
+			return m_preambule + m_newDataToReadSize - (p_pos - &m_data[0]) - m_wordToSearch.size();
 		}
 		else if (p_finalPosposition + m_wordToSearch.size() + MAX_SUFFIX_SIZE < p_bufferPackage + m_newDataToReadSize)
 		{

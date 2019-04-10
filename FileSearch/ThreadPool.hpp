@@ -7,34 +7,21 @@
 #include <condition_variable>
 #include <queue>
 
-
-
 class ThreadPool
 {
 public:
 	using Task = std::function<void()>;
 
-	explicit ThreadPool(std::size_t numThreads, std::chrono::time_point<std::chrono::system_clock> &_startTime)
-		: startTime(_startTime)
+	explicit ThreadPool(std::size_t p_numThreads, std::chrono::time_point<std::chrono::system_clock> p_startTime)
+		: m_startTime(p_startTime)
 	{
-		start(numThreads);
+		start(p_numThreads);
 	}
 
-	~ThreadPool()
-	{
-		stop();
-	}
-
-	void enqueue(Task task)
-	{
-		{
-			std::unique_lock<std::mutex> lock{ m_eventMutex };
-			m_task.emplace(task);
-		}
-		m_eventVar.notify_one();
-	}
+	~ThreadPool();
+	void enqueue(Task task);
 private:
-	std::chrono::time_point<std::chrono::system_clock> startTime;
+	std::chrono::time_point<std::chrono::system_clock> m_startTime;
 
 	std::vector<std::thread> m_threads;
 	std::mutex m_eventMutex;
@@ -42,48 +29,6 @@ private:
 	bool m_stopping = false;
 	std::queue<Task> m_task;
 
-	void start(std::size_t p_numThreads)
-	{
-		for (std::size_t i = 0; i < p_numThreads; ++i)
-		{
-			m_threads.emplace_back([=]()
-			{
-				while (true)
-				{
-					Task task;
-					{
-						std::unique_lock<std::mutex> lock{ m_eventMutex };
-
-						m_eventVar.wait(lock, [=] { return m_stopping || !m_task.empty(); });
-
-						if (m_stopping && m_task.empty())
-						{
-							break;
-						}
-
-						task = std::move(m_task.front());
-						m_task.pop();
-					}
-					task();
-				}
-			});
-		}
-	}
-
-	void stop()
-	{
-		{
-			std::unique_lock<std::mutex> lock{ m_eventMutex };
-			m_stopping = true;
-		}
-
-		m_eventVar.notify_all();
-		for (auto& thread : m_threads)
-		{
-			thread.join();
-		}
-		//performance testing purpose
-		//std::cout << "Execution time: "<<
-		//	static_cast<std::chrono::duration<double>>(std::chrono::system_clock::now() - startTime).count() << std::endl;
-	}
+	void start(std::size_t p_numThreads);
+	void stop();
 };

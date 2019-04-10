@@ -1,9 +1,4 @@
-#include <thread>
-#include <mutex>
-#include <filesystem>
-#include <stdio.h>
-#include "SearchResult.h"
-#include <iostream>
+#pragma
 #include "FileParser.h"
 
 
@@ -34,9 +29,9 @@ public:
 				std::streamoff fileSize = in.tellg();
 				in.seekg(0, std::ios::beg);
 
-				size_t preambule = MAX_PREFIX_SIZE + m_wordToSearch.size() + MAX_SUFFIX_SIZE;
-				constexpr size_t finalBufferSize = DATA_BUFFER;
-				size_t dataBuffer = DATA_BUFFER - preambule;
+				size_t preambule = MAX_PREFIX_SIZE + m_wordToSearch.size() + MAX_SUFFIX_SIZE - 1;
+				constexpr size_t finalBufferSize = DATA_BUFFER_SIZE;
+				size_t dataBuffer = DATA_BUFFER_SIZE - preambule;
 				size_t newDataToReadSize = finalBufferSize - preambule;
 
 				char data[finalBufferSize];
